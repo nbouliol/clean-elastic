@@ -1,7 +1,5 @@
 extern crate reqwest;
 
-use std::collections::HashMap;
-
 #[derive(Debug)]
 pub struct ElasticInfos {
     alias : String,
@@ -15,16 +13,17 @@ impl ElasticInfos {
 }
 
 
-pub fn get_indexes() -> Result<Vec<ElasticInfos>,  Box<std::error::Error>> {
-    let resp = reqwest::get("http://localhost:9200/_cat/aliases")?
+pub fn get_indexes(el_url: &str) -> Result<Vec<ElasticInfos>,  Box<std::error::Error>> {
+	// "http://localhost:9200/_cat/aliases"
+    let resp = reqwest::get(el_url)?
             .text()?;
-    
+
     let mut ret : Vec<ElasticInfos> = Vec::new();
 
     for line in resp.lines() {
         let mut vec: Vec<&str> = line.split(" ").collect();
         vec.retain(|&v| v != "");
-        
+
         ret.push(ElasticInfos::new(vec[0], vec[1]));
     }
 
@@ -43,6 +42,6 @@ pub fn clean_indexes(infos: &Vec<ElasticInfos>) -> Result<(), Box<std::error::Er
 
         println!("Deleted index {} and alias {}", i.index, i.alias);
     }
-    
+
     Ok(())
 }

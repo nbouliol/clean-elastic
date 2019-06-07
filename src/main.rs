@@ -10,9 +10,12 @@ fn main() {
         .version("0.1")
         .author("nbo")
         .about("Elsatic management 4 the noobs")
-        .arg(Arg::with_name("list")
-            .short("l")
-            .help("list indexes and aliases"))
+        .arg(Arg::with_name("list-index")
+            .short("i")
+            .help("list indexes"))
+        .arg(Arg::with_name("list-alias")
+            .short("a")
+            .help("list alias"))
         .get_matches();
 
 	let elastic_url: String; // = env::var("ELASTIC_URL").unwrap();
@@ -25,7 +28,7 @@ fn main() {
 
 	let elastic_infos = elastic::get_indexes(&elastic_url).unwrap();
 
-	if matches.is_present("list") {
+	if matches.is_present("list-index") {
         let space = elastic::get_max_length(&elastic_infos).expect("Error getting max shit");
         for e in elastic_infos {
             println!("{0:width$} {1: >30} {2}", e.index, e.health, e.doc_count, width = space + 5 );

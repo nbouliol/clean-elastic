@@ -25,15 +25,14 @@ impl fmt::Display for Health {
 
 #[derive(Debug)]
 pub struct ElasticInfos {
-    pub alias : String,
     pub index: String,
     pub doc_count: i64,
     pub health: Health
 }
 
 impl ElasticInfos {
-    pub fn new(a: &str, i: &str, docs: i64, health: &str) -> ElasticInfos {
-        ElasticInfos {alias:"".to_string(), index:i.to_string(), doc_count: docs, health: Health::Yellow}
+    pub fn new(i: &str, docs: i64, health: &str) -> ElasticInfos {
+        ElasticInfos {index:i.to_string(), doc_count: docs, health: Health::Yellow}
     }
 }
 

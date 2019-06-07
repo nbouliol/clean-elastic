@@ -1,21 +1,60 @@
 extern crate reqwest;
+extern crate termion;
+
+use termion::{color, style};
+use reqwest::Url;
+use std::fmt;
 
 #[derive(Debug)]
-pub struct ElasticInfos {
-    alias : String,
-    index: String
+pub enum Health {
+    Green,
+    Yellow,
+    Red
 }
 
-impl ElasticInfos {
-    pub fn new(a: &str, i: &str) -> ElasticInfos {
-        ElasticInfos {alias: a.to_string(), index:i.to_string()}
+impl fmt::Display for Health {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let display = match &self {
+          Health::Green => format!("{}Green{}", color::Fg(color::Green), style::Reset),
+          Health::Red => format!("{}Red{}", color::Fg(color::Red), style::Reset),
+          Health::Yellow => format!("{}Yellow{}", color::Fg(color::Yellow), style::Reset),
+        };
+        write!(f, "{}",display)
     }
 }
 
+#[derive(Debug)]
+pub struct ElasticInfos {
+    pub alias : String,
+    pub index: String,
+    pub doc_count: i64,
+    pub health: Health
+}
+
+impl ElasticInfos {
+    pub fn new(a: &str, i: &str, docs: i64, health: &str) -> ElasticInfos {
+        ElasticInfos {alias:"".to_string(), index:i.to_string(), doc_count: docs, health: Health::Yellow}
+    }
+}
+
+pub fn get_max_length(vec: &Vec<ElasticInfos>) -> Result<usize, Box<std::error::Error>> {
+    let mut max : usize = 0;
+    for v in vec {
+        let value = v.index.len();
+        if value > max {
+            max = value;
+        }
+    }
+    Ok(max)
+}
 
 pub fn get_indexes(el_url: &str) -> Result<Vec<ElasticInfos>,  Box<std::error::Error>> {
-	// "http://localhost:9200/_cat/aliases"
-    let resp = reqwest::get(el_url)?
+	// "http://localhost:9200"
+    // let mut url = el_url.to_owned() + "/_cat/indices";
+    let url = Url::parse(el_url).unwrap();
+    let url = url.join("/_cat/indices").unwrap();
+    
+    let resp = reqwest::get(url)?
             .text()?;
 
     let mut ret : Vec<ElasticInfos> = Vec::new();
@@ -24,7 +63,7 @@ pub fn get_indexes(el_url: &str) -> Result<Vec<ElasticInfos>,  Box<std::error::E
         let mut vec: Vec<&str> = line.split(" ").collect();
         vec.retain(|&v| v != "");
 
-        ret.push(ElasticInfos::new(vec[0], vec[1]));
+        ret.push(ElasticInfos::new(vec[0], vec[2], vec[4].parse::<i64>().unwrap(), vec[0]));
     }
 
     Ok(ret)
